@@ -23,10 +23,10 @@ export async function executeSrcCommand(
   }
 
   return new Promise((resolve, reject) => {
-    // Sourcegraph API key from environment variable
+    // Sourcegraph API key from env
     const SRC_ACCESS_TOKEN = process.env.SRC_ACCESS_TOKEN;
-    // Sourcegraph endpoint, default to sourcegraph.com if not specified
-    const SRC_ENDPOINT = process.env.SRC_ENDPOINT || "https://sourcegraph.com";
+    // Sourcegraph endpoint from env
+    const SRC_ENDPOINT = process.env.SRC_ENDPOINT;
 
     // Create environment for the command with API key
     const env = {

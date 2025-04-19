@@ -170,9 +170,10 @@ server.tool(
       .min(1)
       .max(25)
       .optional()
+      .default(10)
       .describe("Maximum number of results to return"),
   },
-  async ({ componentName, propName, limit = 10 }) => {
+  async ({ componentName, propName, limit }) => {
     try {
       // Construct the regex pattern for searching component prop usage
       // The pattern looks for <ComponentName propName=
@@ -247,7 +248,7 @@ const start = async () => {
 
     // Log environment variables for debugging (without the token)
     console.error(
-      `SRC_ENDPOINT: ${process.env.SRC_ENDPOINT || "Not set, using default"}`,
+      `SRC_ENDPOINT: ${process.env.SRC_ENDPOINT ? "Set" : "Not set"}`,
     );
     console.error(
       `SRC_ACCESS_TOKEN: ${process.env.SRC_ACCESS_TOKEN ? "Set" : "Not set"}`,
