@@ -2,35 +2,34 @@
 
 # Sourcegraph MCP Server Installation Script
 
-# Step 1: Confirm installation location
-echo "Installing sourcegraph-mcp server..."
+# Step 1: Check if Cursor is installed correctly
+echo "Installing sourcegraph-mcp server to $HOME/.cursor..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/.cursor/mcp.json"
+CONFIG_DIR="$HOME/.cursor"
+CONFIG_FILE="$CONFIG_DIR/mcp.json"
 
-echo "Confirm installation location: $SCRIPT_DIR/.cursor (y/n)"
-read -r confirm
-if [[ "$confirm" =~ ^[Nn]$ ]]; then
-    echo "sourcegraph-mcp may only be installed to a project's local .cursor folder at the root of your repository"
+# Check if the .cursor folder exists in the HOME directory
+if [ ! -d "$CONFIG_DIR" ]; then
+    echo "Error: The .cursor folder does not exist in your HOME directory ($CONFIG_DIR)."
+    echo "Cursor may not be installed correctly. Please install Cursor and try again."
     exit 1
 fi
 
-# Create .cursor/mcp.json if it doesn't exist
-if [ ! -f "$CONFIG_FILE" ]; then
-    mkdir -p "$SCRIPT_DIR/.cursor"
+# Create mcp.json if it doesn't exist
+if [ ! -f "$CONFIG_FILE" ] || [ ! -s "$CONFIG_FILE" ]; then
     echo "{}" > "$CONFIG_FILE"
 fi
 
 # Step 2: Install dependencies and build the server
-echo "Installing dependencies with yarn..."
+echo "Installing dependencies with yarn . . ."
 yarn install
-echo "Building the server with yarn build..."
+echo "Compiling TypeScript source code . . ."
 yarn build
 
 # Step 3: Set up server runtime env vars
-echo "Enter the Sourcegraph URL (https://sourcegraph.com):"
+echo "Enter Sourcegraph URL (https://sourcegraph.com):"
 read -r sourcegraph_url
 sourcegraph_url=${sourcegraph_url:-"https://sourcegraph.com"}
-echo $sourcegraph_url
 echo "Enter your Sourcegraph Access Token:"
 read -r token
 
@@ -41,10 +40,10 @@ TMP_FILE=$(mktemp)
 # Check if jq is installed
 if command -v jq &> /dev/null; then
     # Use jq to update the JSON file with the new mcpServers format
-    jq --arg path "$SCRIPT_DIR" --arg token "$token" --arg sourcegraph_url "$sourcegraph_url" '.mcpServers = {
+    jq --arg server_file "$SCRIPT_DIR/dist/index.js" --arg token "$token" --arg sourcegraph_url "$sourcegraph_url" '.mcpServers = {
         "sourcegraph-mcp": {
-            "command": "yarn",
-            "args": ["--cwd", $path, "start"],
+            "command": "node",
+            "args": [$server_file],
             "env": {
                 "SRC_ACCESS_TOKEN": ($token),
                 "SRC_ENDPOINT": ($sourcegraph_url)
@@ -58,8 +57,8 @@ else
     echo ""
     echo "\"mcpServers\": {"
     echo "  \"sourcegraph-mcp\": {"
-    echo "    \"command\": \"yarn\","
-    echo "    \"args\": [\"--cwd\", \"$SCRIPT_DIR\", \"start\"],"
+    echo "    \"command\": \"node\","
+    echo "    \"args\": [\"$SCRIPT_DIR/dist/index.js\"],"
     echo "    \"env\": {"
     echo "      \"SRC_ACCESS_TOKEN\": \"<your-token-here>\""
     echo "      \"SRC_ENDPOINT\": \"<sourcegraph-url-here>\""
